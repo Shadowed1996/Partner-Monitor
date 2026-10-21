@@ -1,0 +1,54 @@
+name: Rilascio
+
+# A ogni push su main costruisce l'installer e lo pubblica come release
+# su Shadowed1996/Partner-Monitor-Release, da cui l'app si aggiorna da sola.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: rilascio
+  cancel-in-progress: false
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Versione automatica
+        shell: bash
+        run: |
+          base=$(node -p "require('./package.json').version.split('.').slice(0,2).join('.')")
+          npm version "$base.${{ github.run_number }}" --no-git-tag-version --allow-same-version
+
+      - run: npm ci
+
+      - run: npm run prova
+
+      - name: Costruisci
+        run: npx electron-builder --win --publish never
+
+      # electron-builder taggherebbe il commit di questo repo, che nel repo
+      # delle release non esiste: la release la crea gh sul suo main.
+      - name: Pubblica
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          NOTE: ${{ github.event.head_commit.message || 'Nuova versione' }}
+        run: |
+          versione=$(node -p "require('./package.json').version")
+          gh release create "v$versione" \
+            --repo Shadowed1996/Partner-Monitor-Release \
+            --target main \
+            --title "Partner Monitor $versione" \
+            --notes "$NOTE" \
+            dist/latest.yml \
+            dist/Partner-Monitor-Installazione.exe \
+            dist/Partner-Monitor-Installazione.exe.blockmap

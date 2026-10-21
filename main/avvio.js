@@ -2,6 +2,8 @@ const path = require("node:path");
 const fs = require("node:fs");
 const { app, BrowserWindow, Tray, Menu, Notification, ipcMain, shell, dialog, nativeTheme, nativeImage, session, screen, safeStorage } = require("electron");
 
+const { avviaAggiornamenti } = require("./aggiornamenti");
+
 const RADICE = path.join(__dirname, "..");
 const FINTO = process.env.PARTNER_FINTO === "1";
 const COLLAUDO = Boolean(process.env.PARTNER_COLLAUDO);
@@ -642,6 +644,15 @@ if (!COLLAUDO && !app.requestSingleInstanceLock()) {
       impostazioniCorrenti = {};
     }
     applicaAvvioConWindows(impostazioniCorrenti.avvioConWindows);
+    if (!COLLAUDO && !FINTO) {
+      avviaAggiornamenti({
+        prontaPerInstallare: (versione) => {
+          if (Notification.isSupported()) {
+            new Notification({ title: "Partner Monitor si aggiorna", body: `Installo la versione ${versione}, il programma si riapre da solo.`, icon: ICONA }).show();
+          }
+        }
+      });
+    }
     creaPrincipale();
     creaTray();
     if (preferenze.overlayAperto) {
