@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Partner Monitor</title>
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/font.css">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <a class="salta" href="#contenuto">Vai al contenuto</a>
+  <div class="app">
+    <header class="testata">
+      <div class="marchio">
+        <img src="../risorse/icona.png" alt="" width="34" height="34">
+        <div class="marchio-testo">
+          <strong>Partner Monitor</strong>
+          <span id="testata-canale">Nessun canale</span>
+        </div>
+      </div>
+      <nav class="schede" role="tablist" aria-label="Sezioni">
+        <button type="button" role="tab" id="scheda-monitor" aria-controls="vista-monitor" aria-selected="true" data-vista="monitor">Monitor</button>
+        <button type="button" role="tab" id="scheda-dirette" aria-controls="vista-dirette" aria-selected="false" tabindex="-1" data-vista="dirette">Dirette</button>
+        <button type="button" role="tab" id="scheda-impostazioni" aria-controls="vista-impostazioni" aria-selected="false" tabindex="-1" data-vista="impostazioni">Impostazioni</button>
+      </nav>
+      <div class="testata-azioni">
+        <span class="pillola" id="pillola-stato" role="status">Avvio</span>
+        <button type="button" class="pulsante-icona" id="pulsante-overlay" aria-pressed="false" title="Mostra l'overlay sempre in primo piano">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><rect x="12" y="8" width="6" height="4" rx="1" class="pieno"/></svg>
+          <span>Overlay</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="banda" id="banda" hidden>
+      <span class="banda-punto" aria-hidden="true"></span>
+      <p id="banda-testo"></p>
+      <button type="button" class="pulsante piccolo" id="banda-azione" hidden></button>
+    </div>
+
+    <main id="contenuto" tabindex="-1">
+      <section class="vista" id="vista-monitor" role="tabpanel" aria-labelledby="scheda-monitor">
+        <div class="griglia">
+          <article class="scheda eroe" id="eroe" aria-labelledby="eroe-titolo">
+            <div class="eroe-testa">
+              <span class="stato-live" id="eroe-badge"><span class="punto" aria-hidden="true"></span><span id="eroe-badge-testo">OFFLINE</span></span>
+              <div class="eroe-info">
+                <h2 id="eroe-titolo">Nessuna diretta in corso</h2>
+                <p id="eroe-sotto">In attesa di dati da Twitch</p>
+              </div>
+            </div>
+            <div class="eroe-corpo">
+              <div class="eroe-principale">
+                <p class="numero-eroe" aria-describedby="eroe-didascalia">
+                  <span id="eroe-spettatori">0</span><span class="numero-barra">/</span><span class="numero-obiettivo" id="eroe-obiettivo">75</span>
+                </p>
+                <p class="didascalia" id="eroe-didascalia">UTENTI IN LIVE / OBIETTIVO</p>
+                <div class="barra" role="progressbar" aria-label="Spettatori rispetto all'obiettivo" aria-valuemin="0" aria-valuemax="75" aria-valuenow="0" id="eroe-barra">
+                  <span class="barra-riempimento" id="eroe-barra-riempimento"></span>
+                  <span class="barra-meta" aria-hidden="true"></span>
+                </div>
+              </div>
+              <div class="eroe-media">
+                <p class="etichetta">MEDIA DELLA DIRETTA</p>
+                <p class="numero-medio"><span id="eroe-media">0</span></p>
+                <span class="badge" id="eroe-conta" hidden></span>
+                <p class="nota" id="eroe-media-nota"></p>
+              </div>
+            </div>
+            <dl class="eroe-dati">
+              <div><dt>In onda da</dt><dd id="dato-durata">0 min</dd></div>
+              <div><dt>Picco</dt><dd id="dato-picco">0</dd></div>
+              <div><dt>Follower</dt><dd id="dato-follower">0</dd></div>
+            </dl>
+          </article>
+
+          <article class="scheda grafico-scheda" aria-labelledby="grafico-titolo">
+            <header class="scheda-testa">
+              <h2 id="grafico-titolo">Spettatori della diretta</h2>
+              <span class="legenda"><span class="legenda-linea" aria-hidden="true"></span><span id="legenda-soglia">soglia 75</span></span>
+            </header>
+            <div class="grafico" id="grafico" role="img" aria-label="Grafico degli spettatori della diretta"></div>
+          </article>
+
+          <section class="periodi" aria-labelledby="periodi-titolo">
+            <header class="periodi-testa">
+              <h2 id="periodi-titolo"><span class="mono" id="periodi-completati">0 / 2</span> PERIODI COMPLETATI</h2>
+              <p class="nota">Servono 6 dirette in giorni diversi con media di almeno <span id="periodi-soglia">75</span> spettatori in entrambi i periodi.</p>
+            </header>
+            <div class="periodi-griglia" id="periodi-griglia"></div>
+          </section>
+
+          <article class="scheda ufficiale" aria-labelledby="ufficiale-titolo">
+            <header class="scheda-testa">
+              <h2 id="ufficiale-titolo">Dato ufficiale Twitch</h2>
+              <button type="button" class="pulsante secondario piccolo" id="ufficiale-aggiorna">Aggiorna</button>
+            </header>
+            <p class="ufficiale-valore" id="ufficiale-valore">Non ancora letto</p>
+            <ul class="voci-ufficiali" id="ufficiale-voci" hidden></ul>
+            <p class="nota" id="ufficiale-quando">Premi Aggiorna per leggere il Percorso verso il Partner dalla Dashboard Creator.</p>
+            <button type="button" class="pulsante piccolo" id="ufficiale-accedi" hidden>Accedi al cruscotto Twitch</button>
+            <details class="ufficiale-testo" id="ufficiale-dettagli" hidden>
+              <summary>Testo letto dal cruscotto</summary>
+              <pre id="ufficiale-grezzo"></pre>
+            </details>
+            <p class="riferimento" id="tracker" hidden></p>
+            <p class="avvertenza"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.5"/></svg><span>Il conteggio dell'app è una stima. Fa fede la Dashboard Creator di Twitch, sezione Obiettivi.</span></p>
+          </article>
+        </div>
+      </section>
+
+      <section class="vista" id="vista-dirette" role="tabpanel" aria-labelledby="scheda-dirette" hidden>
+        <div class="griglia-dirette">
+          <article class="scheda cronologia" aria-labelledby="cronologia-titolo">
+            <header class="scheda-testa">
+              <h2 id="cronologia-titolo">Cronologia</h2>
+              <button type="button" class="pulsante secondario piccolo" id="esporta-csv">Esporta CSV</button>
+            </header>
+            <div id="cronologia-elenco"></div>
+          </article>
+          <aside class="colonna-lato">
+            <article class="scheda" aria-labelledby="manuale-titolo">
+              <header class="scheda-testa"><h2 id="manuale-titolo">Aggiungi una diretta</h2></header>
+              <p class="nota">Per le dirette fatte quando l'app era chiusa. Prendi la media dal riepilogo della diretta su Twitch.</p>
+              <form id="modulo-manuale" class="modulo" novalidate>
+                <label class="campo"><span>Giorno</span><input type="date" id="manuale-giorno" required></label>
+                <div class="campi-affiancati">
+                  <label class="campo"><span>Media spettatori</span><input type="number" id="manuale-media" min="0" step="1" inputmode="numeric" required></label>
+                  <label class="campo"><span>Ore di diretta</span><input type="number" id="manuale-ore" min="0" max="24" step="0.1" inputmode="decimal" required></label>
+                </div>
+                <p class="errore-campo" id="manuale-errore" role="alert" hidden></p>
+                <button type="submit" class="pulsante">Aggiungi</button>
+              </form>
+            </article>
+            <article class="scheda legenda-fonti" aria-labelledby="fonti-titolo">
+              <header class="scheda-testa"><h2 id="fonti-titolo">Da dove arrivano</h2></header>
+              <ul>
+                <li><span class="fonte fonte-campione">APP</span>misurata dall'app minuto per minuto</li>
+                <li><span class="fonte fonte-cruscotto">CRUSCOTTO</span>letta dal riepilogo diretta di Twitch</li>
+                <li><span class="fonte fonte-manuale">MANUALE</span>inserita da te</li>
+                <li><span class="fonte fonte-vod">VOD</span>ricavata dalla replica, senza media: non conta finché non la aggiungi</li>
+              </ul>
+            </article>
+          </aside>
+        </div>
+      </section>
+
+      <section class="vista" id="vista-impostazioni" role="tabpanel" aria-labelledby="scheda-impostazioni" hidden>
+        <div class="griglia-impostazioni">
+          <article class="scheda" aria-labelledby="imp-twitch-titolo">
+            <header class="scheda-testa"><h2 id="imp-twitch-titolo">Twitch</h2><span class="pillola" id="imp-collegamento">Non collegato</span></header>
+            <form class="modulo" id="modulo-twitch" novalidate>
+              <label class="campo"><span>Canale</span><input type="text" id="imp-canale" autocomplete="off" spellcheck="false" placeholder="slayer_beard"></label>
+              <label class="campo"><span>Client ID</span><input type="text" id="imp-client" autocomplete="off" spellcheck="false" placeholder="Incolla qui il Client ID"></label>
+              <details class="guida-client">
+                <summary>Come si crea il Client ID</summary>
+                <ol class="passi-client"></ol>
+              </details>
+              <p class="errore-campo" id="imp-twitch-errore" role="alert" hidden></p>
+              <div class="riga-pulsanti">
+                <button type="submit" class="pulsante">Salva</button>
+                <button type="button" class="pulsante secondario" id="imp-accedi">Accedi a Twitch</button>
+                <button type="button" class="pulsante fantasma" id="imp-esci">Esci</button>
+              </div>
+            </form>
+          </article>
+
+          <article class="scheda" aria-labelledby="imp-obiettivo-titolo">
+            <header class="scheda-testa"><h2 id="imp-obiettivo-titolo">Obiettivo</h2></header>
+            <p class="nota">I valori ufficiali di Twitch sono 75 di media, 6 dirette, 30 giorni. Cambiali solo per provare.</p>
+            <form class="modulo" id="modulo-obiettivo" novalidate>
+              <div class="campi-tre">
+                <label class="campo"><span>Media</span><input type="number" id="imp-media" min="1" step="1"></label>
+                <label class="campo"><span>Dirette</span><input type="number" id="imp-dirette" min="1" max="30" step="1"></label>
+                <label class="campo"><span>Giorni</span><input type="number" id="imp-giorni" min="1" max="90" step="1"></label>
+              </div>
+              <div class="riga-pulsanti">
+                <button type="submit" class="pulsante">Salva</button>
+                <button type="button" class="pulsante fantasma" id="imp-ripristina">Valori di Twitch</button>
+              </div>
+            </form>
+          </article>
+
+          <article class="scheda" aria-labelledby="imp-app-titolo">
+            <header class="scheda-testa"><h2 id="imp-app-titolo">App</h2></header>
+            <div class="interruttori">
+              <label class="interruttore"><input type="checkbox" id="imp-avvio" role="switch"><span class="interruttore-grafica" aria-hidden="true"></span><span class="interruttore-testo"><strong>Avvia con Windows</strong><small>Parte nascosta nell'area di notifica</small></span></label>
+              <label class="interruttore"><input type="checkbox" id="imp-notifiche" role="switch"><span class="interruttore-grafica" aria-hidden="true"></span><span class="interruttore-testo"><strong>Notifiche</strong><small>Inizio e fine diretta, quando inizia a contare, periodo completato</small></span></label>
+              <label class="interruttore"><input type="checkbox" id="imp-overlay" role="switch"><span class="interruttore-grafica" aria-hidden="true"></span><span class="interruttore-testo"><strong>Overlay</strong><small>Mini finestra sempre in primo piano, trascinabile</small></span></label>
+              <label class="interruttore"><input type="checkbox" id="imp-tracker" role="switch"><span class="interruttore-grafica" aria-hidden="true"></span><span class="interruttore-testo"><strong>TwitchTracker</strong><small>Riferimento esterno, letto al massimo una volta l'ora</small></span></label>
+              <label class="interruttore"><input type="checkbox" id="imp-follower" role="switch"><span class="interruttore-grafica" aria-hidden="true"></span><span class="interruttore-testo"><strong>Conta i follower</strong><small>Chiede a Twitch un permesso in più: vale dal prossimo accesso</small></span></label>
+              <label class="interruttore"><input type="checkbox" id="imp-cruscotto" role="switch"><span class="interruttore-grafica" aria-hidden="true"></span><span class="interruttore-testo"><strong>Importa dal cruscotto</strong><small>Prende la media delle dirette passate dal riepilogo di Twitch</small></span></label>
+              <label class="interruttore"><input type="checkbox" id="imp-diagnostica" role="switch"><span class="interruttore-grafica" aria-hidden="true"></span><span class="interruttore-testo"><strong>Diagnostica</strong><small>Salva il testo letto dal cruscotto per migliorare la lettura</small></span></label>
+            </div>
+          </article>
+
+          <article class="scheda" aria-labelledby="imp-dati-titolo">
+            <header class="scheda-testa"><h2 id="imp-dati-titolo">Dati</h2></header>
+            <p class="nota">Le dirette restano solo su questo computer. Puoi esportarle in un file CSV da aprire con Excel.</p>
+            <div class="riga-pulsanti">
+              <button type="button" class="pulsante secondario" id="imp-csv">Esporta CSV</button>
+              <button type="button" class="pulsante fantasma" id="imp-guida">Rifai la procedura guidata</button>
+            </div>
+            <p class="nota piccola" id="imp-versione"></p>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="guida" id="guida" role="dialog" aria-modal="true" aria-labelledby="guida-titolo" hidden>
+    <div class="guida-scheda">
+      <ol class="guida-passi" aria-label="Passi">
+        <li data-passo="1"><span>1</span>Canale</li>
+        <li data-passo="2"><span>2</span>Client ID</li>
+        <li data-passo="3"><span>3</span>Accesso</li>
+      </ol>
+
+      <section class="guida-pagina" data-pagina="1">
+        <h1 id="guida-titolo">Benvenuto in Partner Monitor</h1>
+        <p class="guida-intro">Segue il percorso verso il Twitch Partner: 6 dirette con almeno 75 spettatori di media, negli ultimi 30 giorni e nei 30 prima. Bastano tre passi.</p>
+        <form class="modulo" id="guida-modulo-canale" novalidate>
+          <label class="campo"><span>Quale canale vuoi seguire?</span><input type="text" id="guida-canale" autocomplete="off" spellcheck="false" placeholder="slayer_beard"></label>
+          <p class="errore-campo" id="guida-errore-1" role="alert" hidden></p>
+          <div class="riga-pulsanti fine"><button type="submit" class="pulsante">Avanti</button></div>
+        </form>
+      </section>
+
+      <section class="guida-pagina" data-pagina="2" hidden>
+        <h1>Crea il tuo Client ID</h1>
+        <p class="guida-intro">Twitch chiede un codice dell'app, gratuito, che crei una volta sola. Ci vogliono due minuti.</p>
+        <ol class="passi-client"></ol>
+        <form class="modulo" id="guida-modulo-client" novalidate>
+          <label class="campo"><span>Client ID</span><input type="text" id="guida-client" autocomplete="off" spellcheck="false" placeholder="Incolla qui il Client ID"></label>
+          <p class="errore-campo" id="guida-errore-2" role="alert" hidden></p>
+          <div class="riga-pulsanti fine">
+            <button type="button" class="pulsante fantasma" data-indietro="1">Indietro</button>
+            <button type="submit" class="pulsante">Avanti</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="guida-pagina" data-pagina="3" hidden>
+        <h1>Collega Twitch</h1>
+        <p class="guida-intro" id="guida-accesso-intro">Ti diamo un codice: lo confermi su twitch.tv dal browser e l'app si collega da sola. Nessuna password passa da qui.</p>
+        <div class="codice-scheda" id="guida-codice-scheda" hidden>
+          <p class="etichetta">IL TUO CODICE</p>
+          <p class="codice" id="guida-codice" aria-live="polite"></p>
+          <div class="riga-pulsanti centro">
+            <button type="button" class="pulsante" id="guida-apri">Apri twitch.tv/activate</button>
+            <button type="button" class="pulsante secondario" id="guida-copia">Copia il codice</button>
+          </div>
+          <p class="attesa"><span class="rotella" aria-hidden="true"></span><span id="guida-scade">In attesa della conferma</span></p>
+        </div>
+        <p class="errore-campo" id="guida-errore-3" role="alert" hidden></p>
+        <div class="riga-pulsanti fine">
+          <button type="button" class="pulsante fantasma" data-indietro="2">Indietro</button>
+          <button type="button" class="pulsante fantasma" id="guida-dopo">Lo faccio dopo</button>
+          <button type="button" class="pulsante" id="guida-accedi">Ottieni il codice</button>
+        </div>
+      </section>
+
+      <section class="guida-pagina" data-pagina="4" hidden>
+        <div class="guida-fatto" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+        <h1>Tutto pronto</h1>
+        <p class="guida-intro">Partner Monitor ora segue il canale. Puoi chiudere la finestra: resta attivo accanto all'orologio e ti avvisa quando una diretta inizia a contare.</p>
+        <div class="riga-pulsanti centro"><button type="button" class="pulsante" id="guida-fine">Vai al monitor</button></div>
+      </section>
+    </div>
+  </div>
+
+  <div class="avvisi" id="avvisi" aria-live="polite" aria-atomic="false"></div>
+  <script src="js/grafico.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

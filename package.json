@@ -1,0 +1,29 @@
+{
+  "name": "partner-monitor",
+  "productName": "Partner Monitor",
+  "version": "1.0.0",
+  "description": "Segue il percorso di Slayer_Beard verso il Twitch Partner",
+  "main": "main/avvio.js",
+  "private": true,
+  "author": "Filippo",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "electron .",
+    "prova": "node --test \"prove/**/*.test.js\"",
+    "prova:dati": "node --test \"prove/dati-*.test.js\"",
+    "distribuisci": "electron-builder --win",
+    "collaudo": "node scripts/collaudo.js",
+    "icona": "node scripts/genera-icona.js",
+    "font": "node scripts/copia-font.js"
+  },
+  "devDependencies": {
+    "@fontsource/jetbrains-mono": "5.3.0",
+    "@fontsource/manrope": "5.3.0",
+    "electron": "44.7.0",
+    "electron-builder": "26.15.3"
+  },
+  "allowScripts": {
+    "electron@44.7.0": true,
+    "electron-winstaller@5.4.0": true
+  }
+}

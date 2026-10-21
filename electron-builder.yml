@@ -1,0 +1,41 @@
+appId: com.filippo.partnermonitor
+productName: Partner Monitor
+copyright: Filippo
+directories:
+  output: dist
+  buildResources: risorse
+asar: true
+npmRebuild: false
+nodeGypRebuild: false
+buildDependenciesFromSource: false
+files:
+  - package.json
+  - main/**/*
+  - renderer/**/*
+  - risorse/**/*
+  - "!**/*.map"
+  - "!**/*.md"
+  - "!node_modules/**/*"
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: risorse/icona.ico
+nsis:
+  oneClick: false
+  perMachine: false
+  allowElevation: false
+  allowToChangeInstallationDirectory: false
+  createDesktopShortcut: always
+  createStartMenuShortcut: true
+  runAfterFinish: true
+  shortcutName: Partner Monitor
+  artifactName: Partner-Monitor-Installazione.exe
+  installerLanguages:
+    - it_IT
+  language: "1040"
+  installerIcon: risorse/icona.ico
+  uninstallerIcon: risorse/icona.ico
+  uninstallDisplayName: Partner Monitor
+  deleteAppDataOnUninstall: false
