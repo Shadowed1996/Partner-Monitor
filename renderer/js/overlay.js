@@ -26,6 +26,16 @@
     $("#spettatori").textContent = String(spettatori);
     $("#obiettivo").textContent = String(obiettivo);
     $("#riempimento").style.width = `${Math.min(100, (spettatori / obiettivo) * 100)}%`;
+    const lurk = stato && stato.lurk ? stato.lurk : null;
+    const bloccoLurk = $("#lurk-blocco");
+    bloccoLurk.hidden = !lurk;
+    if (lurk) {
+      const presenti = Number(lurk.presenti) || 0;
+      const vivi = Number(lurk.vivi) || 0;
+      bloccoLurk.classList.toggle("tenue", Boolean(lurk.errore));
+      $("#lurk").textContent = String(presenti);
+      bloccoLurk.title = lurk.errore ? `Ultimo dato valido: ${presenti} in lurk sul sito, il sito adesso non risponde` : `${presenti} con il lurk acceso sul sito, ${vivi} con il video in riproduzione`;
+    }
     const giorni = stato && stato.obiettivo ? Number(stato.obiettivo.giorni) || 30 : 30;
     const periodi = stato && Array.isArray(stato.periodi) ? [...stato.periodi].sort((a, b) => (a.chiave === "corrente" ? 0 : 1) - (b.chiave === "corrente" ? 0 : 1)) : [];
     const contenitore = $("#periodi");

@@ -96,11 +96,57 @@ p {
   font-weight: 500;
 }
 
+.angolo {
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex: 1;
+  min-width: 52px;
+  height: 24px;
+  margin-left: auto;
+}
+
+.lurk {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 7px;
+  border-radius: 6px;
+  background: var(--ciano-tenue);
+  color: var(--ciano);
+  font-family: "JetBrains Mono", monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+
+.lurk.tenue {
+  background: var(--superficie-3);
+  color: var(--testo-3);
+}
+
+.lurk svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .comandi {
+  position: absolute;
+  right: 0;
+  top: 0;
   display: flex;
   gap: 2px;
-  margin-left: auto;
   opacity: 0;
+  pointer-events: none;
   transition: opacity 0.15s;
   -webkit-app-region: no-drag;
 }
@@ -108,6 +154,12 @@ p {
 body:hover .comandi,
 .comandi:focus-within {
   opacity: 1;
+  pointer-events: auto;
+}
+
+body:hover .lurk,
+.angolo:focus-within .lurk {
+  opacity: 0;
 }
 
 .comandi button {
