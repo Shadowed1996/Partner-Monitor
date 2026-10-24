@@ -216,6 +216,7 @@
         testo.textContent = "Aggiornamento non riuscito: continuo con la versione attuale e riprovo più tardi.";
         riga.textContent = `Aggiornamento non riuscito${quando}`;
         break;
+      case "lento":
       case "errore-controllo":
         banda.hidden = true;
         riga.textContent = `Aggiornamenti non controllati: il server non risponde${quando}`;

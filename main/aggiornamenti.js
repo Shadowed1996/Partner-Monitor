@@ -2,6 +2,8 @@ const { app } = require("electron");
 
 const INTERVALLO = 6 * 60 * 60 * 1000;
 const ATTESA_INSTALLAZIONE = 1500;
+const ATTESA_MASSIMA_CONTROLLO = 9000;
+const ATTESA_MASSIMA_DOWNLOAD_FERMO = 45000;
 const simulazione = process.env.PARTNER_PROVA_AGGIORNAMENTO || "";
 
 let stato = { fase: "sviluppo", versione: app.getVersion(), percentuale: null, controllatoIl: null };
@@ -64,6 +66,54 @@ function controllaAggiornamenti() {
   return controlloInCorso;
 }
 
+function attendiEsitoAvvio() {
+  return new Promise((risolvi) => {
+    let deciso = false;
+    let fermo = null;
+    let limite = null;
+    const osserva = (attuale) => {
+      if (attuale.fase === "scarica") {
+        clearTimeout(limite);
+        clearTimeout(fermo);
+        fermo = setTimeout(() => {
+          if (stato.fase === "scarica") {
+            comunica({ fase: "errore", versione: stato.versione, percentuale: null });
+          }
+          decidi();
+        }, ATTESA_MASSIMA_DOWNLOAD_FERMO);
+        return;
+      }
+      if (attuale.fase === "installa") {
+        clearTimeout(limite);
+        clearTimeout(fermo);
+        fermo = setTimeout(decidi, 20000);
+        return;
+      }
+      decidi();
+    };
+    const decidi = () => {
+      if (deciso) {
+        return;
+      }
+      deciso = true;
+      clearTimeout(limite);
+      clearTimeout(fermo);
+      ascoltatori = ascoltatori.filter((funzione) => funzione !== osserva);
+      risolvi("continua");
+    };
+    limite = setTimeout(() => {
+      if (stato.fase === "controllo") {
+        comunica({ fase: "lento", percentuale: null });
+      }
+      decidi();
+    }, ATTESA_MASSIMA_CONTROLLO);
+    ascoltatori.push(osserva);
+    if (stato.fase !== "controllo" && stato.fase !== "scarica" && stato.fase !== "installa") {
+      decidi();
+    }
+  });
+}
+
 function avviaAggiornamenti({ suStato, prontaPerInstallare } = {}) {
   if (typeof suStato === "function") {
     ascoltatori.push(suStato);
@@ -117,8 +167,9 @@ function avviaAggiornamenti({ suStato, prontaPerInstallare } = {}) {
     comunica({ fase: durante ? "errore" : "errore-controllo", versione: durante ? stato.versione : null, percentuale: null, controllatoIl: new Date().toISOString() });
   });
 
+  comunica({ fase: "controllo", percentuale: null });
   controllaAggiornamenti();
   setInterval(controllaAggiornamenti, INTERVALLO).unref();
 }
 
-module.exports = { avviaAggiornamenti, controllaAggiornamenti, statoAggiornamento: () => stato };
+module.exports = { avviaAggiornamenti, controllaAggiornamenti, attendiEsitoAvvio, statoAggiornamento: () => stato };

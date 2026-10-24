@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Partner Monitor</title>
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/font.css">
+  <link rel="stylesheet" href="css/avvio.css">
+</head>
+<body>
+  <main class="avvio">
+    <header class="avvio-testata">
+      <img class="avvio-icona" src="../risorse/icona.png" alt="" width="48" height="48">
+      <div class="avvio-nome">
+        <span class="avvio-titolo">Partner Monitor</span>
+        <span class="avvio-versione" id="avvio-versione"></span>
+      </div>
+    </header>
+    <section class="avvio-stato" aria-live="polite">
+      <p class="avvio-testo" id="avvio-testo">Avvio in corso</p>
+      <p class="avvio-dettaglio" id="avvio-dettaglio">Un attimo</p>
+    </section>
+    <div class="avvio-barra">
+      <div class="avvio-binario"><div class="avvio-riempimento continuo" id="avvio-riempimento"></div></div>
+      <span class="avvio-percentuale" id="avvio-percentuale"></span>
+    </div>
+    <ol class="avvio-passi" id="avvio-passi">
+      <li class="avvio-passo" data-passo="aggiornamenti"><span class="avvio-punto"></span>Aggiornamenti</li>
+      <li class="avvio-passo" data-passo="twitch"><span class="avvio-punto"></span>Twitch</li>
+      <li class="avvio-passo" data-passo="monitor"><span class="avvio-punto"></span>Monitor</li>
+    </ol>
+  </main>
+  <script src="js/avvio.js"></script>
+</body>
+</html>

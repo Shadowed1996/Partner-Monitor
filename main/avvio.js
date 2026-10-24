@@ -2,7 +2,7 @@ const path = require("node:path");
 const fs = require("node:fs");
 const { app, BrowserWindow, Tray, Menu, Notification, ipcMain, shell, dialog, nativeTheme, nativeImage, session, screen, safeStorage } = require("electron");
 
-const { avviaAggiornamenti, controllaAggiornamenti, statoAggiornamento } = require("./aggiornamenti");
+const { avviaAggiornamenti, controllaAggiornamenti, attendiEsitoAvvio, statoAggiornamento } = require("./aggiornamenti");
 
 const RADICE = path.join(__dirname, "..");
 const FINTO = process.env.PARTNER_FINTO === "1";
@@ -12,7 +12,10 @@ const ICONA = path.join(RADICE, "risorse", "icona.png");
 const ICONA_TRAY = path.join(RADICE, "risorse", "tray.png");
 const PAGINA_PRINCIPALE = path.join(RADICE, "renderer", "index.html");
 const PAGINA_OVERLAY = path.join(RADICE, "renderer", "overlay.html");
+const PAGINA_AVVIO = path.join(RADICE, "renderer", "avvio.html");
 const PRELOAD = path.join(__dirname, "preload.js");
+const PRELOAD_AVVIO = path.join(__dirname, "preload-avvio.js");
+const ATTESA_MASSIMA_CHIUSURA_AVVIO = 14000;
 const COLORE_FONDO = "#0d0b14";
 const PARTIZIONE_TWITCH = "persist:twitch";
 const LINK_AMMESSI = [
@@ -41,6 +44,9 @@ let ultimoAccesso = null;
 let impostazioniCorrenti = {};
 let preferenze = {};
 let codaTwitch = Promise.resolve();
+let finestraAvvio = null;
+let principalePronta = false;
+let attesaDalLauncher = false;
 
 nativeTheme.themeSource = "dark";
 app.setAppUserModelId("com.filippo.partnermonitor");
@@ -94,6 +100,7 @@ function riquadroVisibile(riquadro) {
 }
 
 function creaPrincipale() {
+  principalePronta = false;
   const salvato = preferenze.finestra;
   const opzioni = {
     width: 1180,
@@ -124,7 +131,8 @@ function creaPrincipale() {
   }
   principale.loadFile(PAGINA_PRINCIPALE);
   principale.once("ready-to-show", () => {
-    if (!NASCOSTO && !COLLAUDO) {
+    principalePronta = true;
+    if (!NASCOSTO && !COLLAUDO && (!vivo(finestraAvvio) || attesaDalLauncher)) {
       principale.show();
     }
   });
@@ -146,6 +154,74 @@ function creaPrincipale() {
       new Notification({ title: "Partner Monitor resta attivo", body: "Lo trovi nell'area di notifica, accanto all'orologio. Per chiuderlo davvero usa Esci dal suo menu.", icon: ICONA }).show();
     }
   });
+}
+
+function vivo(finestra) {
+  return Boolean(finestra && !finestra.isDestroyed());
+}
+
+function inviaAvvio(dati) {
+  if (vivo(finestraAvvio)) {
+    finestraAvvio.webContents.send("avvio:stato", dati);
+  }
+}
+
+function creaFinestraAvvio() {
+  finestraAvvio = new BrowserWindow({
+    width: 460,
+    height: 300,
+    frame: false,
+    resizable: false,
+    maximizable: false,
+    minimizable: false,
+    fullscreenable: false,
+    show: false,
+    center: true,
+    title: "Partner Monitor",
+    icon: ICONA,
+    backgroundColor: COLORE_FONDO,
+    webPreferences: {
+      preload: PRELOAD_AVVIO,
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+      spellcheck: false,
+      devTools: !app.isPackaged
+    }
+  });
+  finestraAvvio.setMenu(null);
+  finestraAvvio.once("ready-to-show", () => {
+    if (vivo(finestraAvvio)) {
+      finestraAvvio.show();
+    }
+  });
+  finestraAvvio.on("closed", () => {
+    finestraAvvio = null;
+    if (!attesaDalLauncher) {
+      mostraDalLauncher();
+    }
+  });
+  finestraAvvio.loadFile(PAGINA_AVVIO);
+  return new Promise((risolvi) => {
+    finestraAvvio.webContents.once("did-finish-load", risolvi);
+    setTimeout(risolvi, 3000);
+  });
+}
+
+function mostraDalLauncher() {
+  if (attesaDalLauncher) {
+    return;
+  }
+  attesaDalLauncher = true;
+  if (vivo(principale) && principalePronta && !NASCOSTO && !COLLAUDO) {
+    principale.show();
+    principale.focus();
+  }
+  setTimeout(() => {
+    if (vivo(finestraAvvio)) {
+      finestraAvvio.close();
+    }
+  }, 120);
 }
 
 function mostraPrincipale() {
@@ -562,6 +638,8 @@ function registraIpc() {
     await controllaAggiornamenti();
     return statoAggiornamento();
   });
+  ipcMain.handle("avvio:versione", () => app.getVersion());
+  ipcMain.on("avvio:chiudi", () => mostraDalLauncher());
 }
 
 function proteggi() {
@@ -594,7 +672,13 @@ function proteggi() {
 if (!COLLAUDO && !app.requestSingleInstanceLock()) {
   app.quit();
 } else {
-  app.on("second-instance", mostraPrincipale);
+  app.on("second-instance", () => {
+    if (vivo(finestraAvvio) && !attesaDalLauncher) {
+      finestraAvvio.focus();
+      return;
+    }
+    mostraPrincipale();
+  });
   app.on("before-quit", () => {
     uscendo = true;
   });
@@ -650,16 +734,29 @@ if (!COLLAUDO && !app.requestSingleInstanceLock()) {
       impostazioniCorrenti = {};
     }
     applicaAvvioConWindows(impostazioniCorrenti.avvioConWindows);
-    if (process.env.PARTNER_PROVA_AGGIORNAMENTO || (!COLLAUDO && !FINTO)) {
+    const conLauncher = !COLLAUDO && !NASCOSTO;
+    if (conLauncher) {
+      await creaFinestraAvvio();
+    }
+    if (!COLLAUDO || process.env.PARTNER_PROVA_AGGIORNAMENTO) {
       avviaAggiornamenti({
-        suStato: (aggiornamento) => inviaATutti("monitor:aggiornamento", aggiornamento),
+        suStato: (aggiornamento) => {
+          inviaATutti("monitor:aggiornamento", aggiornamento);
+          inviaAvvio({ tipo: "aggiornamento", ...aggiornamento });
+        },
         prontaPerInstallare: (versione) => {
-          if (Notification.isSupported()) {
+          if (Notification.isSupported() && !vivo(finestraAvvio)) {
             new Notification({ title: "Partner Monitor si aggiorna", body: `Installo la versione ${versione}, il programma si riapre da solo.`, icon: ICONA }).show();
           }
         }
       });
+      if (conLauncher) {
+        await attendiEsitoAvvio();
+      }
+    } else {
+      inviaAvvio({ tipo: "aggiornamento", fase: "sviluppo", versione: app.getVersion() });
     }
+    inviaAvvio({ tipo: "caricamento", passo: "twitch", testo: "Collego Twitch", dettaglio: "Leggo il canale, l'accesso e le dirette salvate", percentuale: 55 });
     creaPrincipale();
     creaTray();
     if (preferenze.overlayAperto) {
@@ -670,13 +767,18 @@ if (!COLLAUDO && !app.requestSingleInstanceLock()) {
     } catch (errore) {
       process.stderr.write(`Avvio del monitor non riuscito: ${errore && errore.message ? errore.message : "errore"}\n`);
     }
+    inviaAvvio({ tipo: "caricamento", passo: "monitor", testo: "Preparo il monitor", dettaglio: "Spettatori, media della diretta e periodi", percentuale: 85 });
     try {
       ultimoStato = await monitor.stato();
       aggiornaTray();
     } catch {
       ultimoStato = null;
     }
+    if (conLauncher) {
+      inviaAvvio({ tipo: "pronto" });
+      setTimeout(mostraDalLauncher, ATTESA_MASSIMA_CHIUSURA_AVVIO);
+    }
   });
 }
 
-module.exports = { finestre: () => ({ principale, overlay }), apriOverlay };
+module.exports = { finestre: () => ({ principale, overlay, avvio: finestraAvvio }), apriOverlay };
