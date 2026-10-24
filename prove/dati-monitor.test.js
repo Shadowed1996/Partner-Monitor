@@ -414,7 +414,7 @@ test("Spettatori in lurk letti dal sito ogni 30 secondi, con errori silenziosi",
   await new Promise((risolvi) => setImmediate(risolvi));
   assert.equal(chiamate(), 1);
   assert.deepEqual(monitor.stato().lurk, { presenti: 12, vivi: 9, aggiornato: "2026-10-21T16:00:00.000Z", letto: "2026-10-21T16:00:00.000Z", errore: false });
-  const timerLurk = contesto.pianificatore.inAttesa().find((voce) => voce.ms === 30000);
+  const timerLurk = contesto.pianificatore.inAttesa().find((voce) => voce.ms === 15000);
   assert.ok(timerLurk);
   contesto.twitch.stato.lurk = 20;
   contesto.orologio.avanza(30000);
@@ -423,7 +423,7 @@ test("Spettatori in lurk letti dal sito ogni 30 secondi, con errori silenziosi",
   assert.equal(chiamate(), 2);
   assert.equal(monitor.stato().lurk.presenti, 20);
   contesto.twitch.stato.lurkGuasto = true;
-  const secondo = contesto.pianificatore.inAttesa().find((voce) => voce.ms === 30000);
+  const secondo = contesto.pianificatore.inAttesa().find((voce) => voce.ms === 15000);
   secondo.annullato = true;
   await secondo.funzione();
   assert.equal(monitor.stato().lurk.presenti, 20);

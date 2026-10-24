@@ -1,5 +1,5 @@
 const INDIRIZZO_LURK = "https://slayerbeard.com/api/lurk/presenti";
-const INTERVALLO_LURK = 30000;
+const INTERVALLO_LURK = 15000;
 const INTERVALLO_LURK_ERRORE = 120000;
 
 function mappaLurk(json) {
