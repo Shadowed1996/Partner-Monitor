@@ -244,6 +244,31 @@
     impostaDato(datiDl[2], "Follower", stato && stato.follower !== null && stato.follower !== undefined ? numero(stato.follower) : "Non letti");
   }
 
+  function aggiornaLurk() {
+    const blocco = $("#dato-lurk-blocco");
+    if (!blocco) {
+      return;
+    }
+    const dd = blocco.querySelector("dd");
+    const lurk = stato && stato.lurk ? stato.lurk : null;
+    const spento = Boolean(impostazioni && impostazioni.lurk === false);
+    blocco.hidden = spento;
+    blocco.classList.toggle("tenue", !lurk || Boolean(lurk.errore));
+    dd.textContent = "";
+    if (!lurk) {
+      dd.textContent = "Non letto";
+      blocco.title = "Il sito slayerbeard.com non ha ancora risposto";
+      return;
+    }
+    dd.append(document.createTextNode(numero(lurk.presenti)));
+    const vivi = Number(lurk.vivi) || 0;
+    if (lurk.presenti > 0) {
+      dd.append(crea("small", "", `${numero(vivi)} col video`));
+    }
+    const quando = lurk.letto ? `letto ${tempoFa(lurk.letto)}` : "";
+    blocco.title = lurk.errore ? `Ultimo dato valido ${quando}: il sito adesso non risponde` : `${numero(lurk.presenti)} con il lurk acceso sul sito, ${numero(vivi)} con il video in riproduzione, ${quando}`;
+  }
+
   function impostaDato(blocco, etichetta, valore) {
     blocco.querySelector("dt").textContent = etichetta;
     blocco.querySelector("dd").textContent = valore;
@@ -502,6 +527,7 @@
     $("#imp-avvio").checked = Boolean(impostazioni.avvioConWindows);
     $("#imp-notifiche").checked = impostazioni.notifiche !== false;
     $("#imp-tracker").checked = Boolean(impostazioni.tracker);
+    $("#imp-lurk").checked = impostazioni.lurk !== false;
     $("#imp-follower").checked = impostazioni.follower !== false;
     $("#imp-cruscotto").checked = impostazioni.importaCruscotto !== false;
     $("#imp-diagnostica").checked = Boolean(impostazioni.diagnostica);
@@ -541,6 +567,7 @@
     aggiornaTestata();
     aggiornaBanda();
     aggiornaEroe();
+    aggiornaLurk();
     aggiornaGrafico();
     aggiornaPeriodi();
     aggiornaUfficiale();
@@ -913,6 +940,7 @@
     interruttore("#imp-avvio", "avvioConWindows", "Partirà con Windows", "Non partira più con Windows");
     interruttore("#imp-notifiche", "notifiche", "Notifiche accese", "Notifiche spente");
     interruttore("#imp-tracker", "tracker", "TwitchTracker acceso", "TwitchTracker spento");
+    interruttore("#imp-lurk", "lurk", "Spettatori in lurk accesi", "Spettatori in lurk spenti");
     interruttore("#imp-follower", "follower", "Follower attivi: ricollega Twitch per dare il permesso", "Follower spenti");
     interruttore("#imp-cruscotto", "importaCruscotto", "Importazione dal cruscotto accesa", "Importazione dal cruscotto spenta");
     interruttore("#imp-diagnostica", "diagnostica", "Diagnostica accesa", "Diagnostica spenta");

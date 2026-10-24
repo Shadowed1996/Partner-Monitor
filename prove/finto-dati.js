@@ -91,6 +91,7 @@ function statoScenario(nome, impostazioni) {
     serieDiretta: [],
     ufficiale: null,
     tracker: null,
+    lurk: { presenti: 7, vivi: 5, aggiornato: new Date().toISOString(), letto: new Date().toISOString(), errore: false },
     ultimoErrore: null,
     aggiornatoIl: new Date().toISOString()
   };
@@ -137,7 +138,8 @@ function statoScenario(nome, impostazioni) {
         ],
         richiedeAccesso: false
       },
-      tracker: { aggiornatoIl: new Date(Date.now() - 40 * 60000).toISOString(), media30: 71, picco30: 133, minuti30: 3120, follower: 1281 }
+      tracker: { aggiornatoIl: new Date(Date.now() - 40 * 60000).toISOString(), media30: 71, picco30: 133, minuti30: 3120, follower: 1281 },
+      lurk: { presenti: 34, vivi: 29, aggiornato: new Date().toISOString(), letto: new Date().toISOString(), errore: false }
     };
   }
   if (nome === "periodo-completo") {

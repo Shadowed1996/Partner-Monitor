@@ -630,7 +630,7 @@ main:focus {
 .eroe-dati {
   position: relative;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
   margin: 0;
   padding-top: 18px;
@@ -647,6 +647,22 @@ main:focus {
   margin: 2px 0 0;
   font-size: 18px;
   font-weight: 700;
+}
+
+.eroe-dati .dato-lurk dd {
+  color: var(--ciano);
+}
+
+.eroe-dati .dato-lurk.tenue dd {
+  color: var(--testo-3);
+  font-weight: 600;
+}
+
+.eroe-dati .dato-lurk dd small {
+  margin-left: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--testo-3);
 }
 
 .periodi {
@@ -1960,6 +1976,10 @@ main:focus {
 
   .numero-medio {
     font-size: 40px;
+  }
+
+  .eroe-dati {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .eroe-dati dd {

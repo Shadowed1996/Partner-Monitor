@@ -406,6 +406,36 @@ test("cruscotto ufficiale: parser, diagnostica, import riepilogo, errori della f
   assert.equal(vuoto.avanzamento, "Avanzamento non trovato");
 });
 
+test("Spettatori in lurk letti dal sito ogni 30 secondi, con errori silenziosi", async () => {
+  const contesto = prepara({ impostazioni: { lurk: true } });
+  const monitor = contesto.crea();
+  monitor.avvia();
+  const chiamate = () => contesto.twitch.http.chiamate.filter((richiesta) => richiesta.url.includes("slayerbeard.com")).length;
+  await new Promise((risolvi) => setImmediate(risolvi));
+  assert.equal(chiamate(), 1);
+  assert.deepEqual(monitor.stato().lurk, { presenti: 12, vivi: 9, aggiornato: "2026-10-21T16:00:00.000Z", letto: "2026-10-21T16:00:00.000Z", errore: false });
+  const timerLurk = contesto.pianificatore.inAttesa().find((voce) => voce.ms === 30000);
+  assert.ok(timerLurk);
+  contesto.twitch.stato.lurk = 20;
+  contesto.orologio.avanza(30000);
+  timerLurk.annullato = true;
+  await timerLurk.funzione();
+  assert.equal(chiamate(), 2);
+  assert.equal(monitor.stato().lurk.presenti, 20);
+  contesto.twitch.stato.lurkGuasto = true;
+  const secondo = contesto.pianificatore.inAttesa().find((voce) => voce.ms === 30000);
+  secondo.annullato = true;
+  await secondo.funzione();
+  assert.equal(monitor.stato().lurk.presenti, 20);
+  assert.equal(monitor.stato().lurk.errore, true);
+  assert.equal(monitor.stato().ultimoErrore, null);
+  assert.ok(contesto.pianificatore.inAttesa().some((voce) => voce.ms === 120000));
+  await monitor.salvaImpostazioni({ lurk: false });
+  assert.equal(monitor.stato().lurk, null);
+  assert.equal(contesto.pianificatore.inAttesa().some((voce) => voce.ms === 120000), false);
+  monitor.ferma();
+});
+
 test("TwitchTracker al massimo una volta l ora e solo se attivo", async () => {
   const contesto = prepara({ impostazioni: { tracker: true } });
   const monitor = contesto.crea();

@@ -112,6 +112,10 @@ function creaTwitchFinto(opzioni = {}) {
       if (url.pathname === "/helix/channels/followers") return { corpo: { total: stato.follower, data: [] } };
     }
     if (url.hostname === "twitchtracker.com") return { corpo: { avg_viewers: 70, max_viewers: 130, minutes_streamed: 3000, followers_total: 1200 } };
+    if (url.hostname === "slayerbeard.com") {
+      if (stato.lurkGuasto) return new Error("rete giu");
+      return { corpo: { presenti: stato.lurk == null ? 12 : stato.lurk, vivi: 9, aggiornato: new Date(opzioni.orologio.adesso()).toISOString() } };
+    }
     return { stato: 404, corpo: { message: "not found" } };
   };
   return { stato, http: creaHttp(gestore) };
@@ -125,7 +129,7 @@ function scriviTokenIniziale(cartella, extra = {}) {
 }
 
 function scriviImpostazioni(cartella, impostazioni) {
-  fs.writeFileSync(path.join(cartella, "impostazioni.json"), JSON.stringify({ canale: "slayer_beard", clientId: "abc123", ...impostazioni }));
+  fs.writeFileSync(path.join(cartella, "impostazioni.json"), JSON.stringify({ canale: "slayer_beard", clientId: "abc123", lurk: false, ...impostazioni }));
 }
 
 module.exports = { creaOrologio, creaHttp, creaPianificatore, cartellaTemporanea, leggiCorpo, creaTwitchFinto, scriviTokenIniziale, scriviImpostazioni };

@@ -1,7 +1,7 @@
 {
   "name": "partner-monitor",
   "productName": "Partner Monitor",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Segue il percorso di Slayer_Beard verso il Twitch Partner",
   "main": "main/avvio.js",
   "private": true,

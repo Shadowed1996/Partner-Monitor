@@ -9,6 +9,7 @@ const { unisciGiorni, calcolaPeriodi, arrotonda } = require("./periodi");
 const campionatore = require("./campionatore");
 const { analizzaAvanzamento, analizzaRiepilogo, riassunto } = require("./cruscotto");
 const { esportaCsv, mappaTracker } = require("./esporta");
+const { INDIRIZZO_LURK, INTERVALLO_LURK, INTERVALLO_LURK_ERRORE, mappaLurk } = require("./lurk");
 
 const SCOPE_FOLLOWER = "moderator:read:followers";
 const ORA = 3600000;
@@ -21,6 +22,7 @@ const IMPOSTAZIONI_PREDEFINITE = {
   obiettivo: { media: 75, dirette: 6, giorni: 30 },
   follower: true,
   tracker: false,
+  lurk: true,
   diagnostica: false,
   importaCruscotto: true,
   notifiche: true,
@@ -93,7 +95,7 @@ function normalizzaImpostazioni(grezze) {
     dirette: intero(obiettivo.dirette, 1, 30, 6),
     giorni: intero(obiettivo.giorni, 1, 90, 30)
   };
-  for (const chiave of ["follower", "tracker", "diagnostica", "importaCruscotto", "notifiche", "avvioConWindows"]) esito[chiave] = Boolean(esito[chiave]);
+  for (const chiave of ["follower", "tracker", "lurk", "diagnostica", "importaCruscotto", "notifiche", "avvioConWindows"]) esito[chiave] = Boolean(esito[chiave]);
   return esito;
 }
 
@@ -149,6 +151,9 @@ function creaMonitor(opzioni = {}) {
   let accessoInCorso = null;
   let controlloAccesso = null;
   let ufficialeInCorso = null;
+  let timerLurk = null;
+  let lurk = null;
+  let letturaLurk = null;
 
   function caricaToken() {
     const grezzo = leggiJson(percorsi.token, {}, segnalaCorrotto);
@@ -252,6 +257,7 @@ function creaMonitor(opzioni = {}) {
           }
         : null,
       tracker: impostazioni.tracker && dati.cache.tracker ? { ...dati.cache.tracker } : null,
+      lurk: impostazioni.lurk && lurk ? { ...lurk } : null,
       ultimoErrore: vivo.ultimoErrore,
       aggiornatoIl: iso(istante)
     };
@@ -450,6 +456,40 @@ function creaMonitor(opzioni = {}) {
     } catch {}
   }
 
+  function fermaLurk() {
+    if (timerLurk) annulla(timerLurk);
+    timerLurk = null;
+  }
+
+  async function leggiLurk() {
+    if (!attivo || !impostazioni.lurk) return;
+    if (letturaLurk) return letturaLurk;
+    fermaLurk();
+    letturaLurk = (async () => {
+      let attesa = INTERVALLO_LURK;
+      try {
+        const risposta = await eseguiRichiesta(http, { metodo: "GET", url: INDIRIZZO_LURK, intestazioni: { Accept: "application/json" } });
+        const valori = risposta.stato === 200 ? mappaLurk(risposta.json) : null;
+        if (valori) lurk = { ...valori, letto: iso(adesso()), errore: false };
+        else {
+          lurk = lurk ? { ...lurk, errore: true } : null;
+          attesa = INTERVALLO_LURK_ERRORE;
+        }
+      } catch {
+        lurk = lurk ? { ...lurk, errore: true } : null;
+        attesa = INTERVALLO_LURK_ERRORE;
+      }
+      letturaLurk = null;
+      if (!attivo || !impostazioni.lurk) return;
+      emettiStato();
+      timerLurk = pianifica(() => {
+        timerLurk = null;
+        return leggiLurk();
+      }, attesa);
+    })();
+    return letturaLurk;
+  }
+
   function scriviDiagnostica(tipo, testo) {
     if (!impostazioni.diagnostica) return;
     try {
@@ -512,12 +552,14 @@ function creaMonitor(opzioni = {}) {
     attivo = true;
     emettiStato();
     programma(0);
+    leggiLurk();
   };
 
   monitor.ferma = () => {
     attivo = false;
     if (timer) annulla(timer);
     timer = null;
+    fermaLurk();
     if (controlloAccesso) controlloAccesso.annullato = true;
     salvaDati();
   };
@@ -594,10 +636,15 @@ function creaMonitor(opzioni = {}) {
       ultimoVod = 0;
       vivo.inOnda = null;
     }
+    if (prima.lurk && !impostazioni.lurk) {
+      fermaLurk();
+      lurk = null;
+    }
     salvaImpostazioniSuDisco();
     salvaDati();
     emettiStato();
     programma(0);
+    if (!prima.lurk && impostazioni.lurk) leggiLurk();
     return clona(impostazioni);
   };
 
