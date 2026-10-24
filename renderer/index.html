@@ -34,6 +34,12 @@
       </div>
     </header>
 
+    <div class="banda aggiornamento" id="banda-aggiornamento" role="status" hidden>
+      <span class="banda-punto" aria-hidden="true"></span>
+      <p id="banda-aggiornamento-testo"></p>
+      <span class="banda-barra" id="banda-aggiornamento-barra" hidden><span></span></span>
+    </div>
+
     <div class="banda" id="banda" hidden>
       <span class="banda-punto" aria-hidden="true"></span>
       <p id="banda-testo"></p>
@@ -205,7 +211,13 @@
               <button type="button" class="pulsante secondario" id="imp-csv">Esporta CSV</button>
               <button type="button" class="pulsante fantasma" id="imp-guida">Rifai la procedura guidata</button>
             </div>
-            <p class="nota piccola" id="imp-versione"></p>
+            <div class="aggiornamento-riga">
+              <div>
+                <p class="nota piccola" id="imp-versione"></p>
+                <p class="nota piccola" id="imp-aggiornamento"></p>
+              </div>
+              <button type="button" class="pulsante fantasma" id="imp-controlla">Controlla aggiornamenti</button>
+            </div>
           </article>
         </div>
       </section>

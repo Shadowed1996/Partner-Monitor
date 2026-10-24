@@ -27,6 +27,8 @@
   let passoGuida = 1;
   let accessoRichiesto = false;
   let timerAccesso = null;
+  let aggiornamento = null;
+  let timerAggiornamento = null;
 
   function crea(tag, classe, testo) {
     const elemento = document.createElement(tag);
@@ -162,6 +164,70 @@
       return;
     }
     banda.hidden = true;
+  }
+
+  function aggiornaAggiornamento(dati) {
+    aggiornamento = dati || null;
+    const banda = $("#banda-aggiornamento");
+    const testo = $("#banda-aggiornamento-testo");
+    const barra = $("#banda-aggiornamento-barra");
+    const riga = $("#imp-aggiornamento");
+    const pulsante = $("#imp-controlla");
+    clearTimeout(timerAggiornamento);
+    banda.className = "banda aggiornamento";
+    barra.hidden = true;
+    pulsante.disabled = false;
+    const versione = aggiornamento && aggiornamento.versione ? `versione ${aggiornamento.versione}` : "nuova versione";
+    const quando = aggiornamento && aggiornamento.controllatoIl ? `, controllato alle ${formatoOra.format(new Date(aggiornamento.controllatoIl))}` : "";
+    switch (aggiornamento ? aggiornamento.fase : "") {
+      case "controllo":
+        banda.hidden = false;
+        testo.textContent = "Controllo aggiornamenti in corso, cerco una versione più nuova.";
+        riga.textContent = "Controllo aggiornamenti in corso";
+        pulsante.disabled = true;
+        break;
+      case "scarica":
+        banda.hidden = false;
+        testo.textContent = `Trovata la ${versione}, la scarico: ${aggiornamento.percentuale || 0}%. Non chiudere il programma.`;
+        barra.hidden = false;
+        barra.querySelector("span").style.width = `${Math.min(100, aggiornamento.percentuale || 0)}%`;
+        riga.textContent = `Scarico la ${versione}, ${aggiornamento.percentuale || 0}%`;
+        pulsante.disabled = true;
+        break;
+      case "installa":
+        banda.hidden = false;
+        banda.classList.add("ok");
+        testo.textContent = `Installo la ${versione}: il programma si chiude e si riapre da solo.`;
+        riga.textContent = `Installo la ${versione}`;
+        pulsante.disabled = true;
+        break;
+      case "aggiornato":
+        banda.hidden = false;
+        banda.classList.add("ok");
+        testo.textContent = `Hai l'ultima versione, Partner Monitor ${aggiornamento.versione} è aggiornato.`;
+        riga.textContent = `Hai l'ultima versione${quando}`;
+        timerAggiornamento = setTimeout(() => {
+          banda.hidden = true;
+        }, 5000);
+        break;
+      case "errore":
+        banda.hidden = false;
+        banda.classList.add("errore");
+        testo.textContent = "Aggiornamento non riuscito: continuo con la versione attuale e riprovo più tardi.";
+        riga.textContent = `Aggiornamento non riuscito${quando}`;
+        break;
+      case "errore-controllo":
+        banda.hidden = true;
+        riga.textContent = `Aggiornamenti non controllati: il server non risponde${quando}`;
+        break;
+      case "sviluppo":
+        banda.hidden = true;
+        riga.textContent = "Copia di prova: gli aggiornamenti automatici sono spenti";
+        break;
+      default:
+        banda.hidden = true;
+        riga.textContent = "";
+    }
   }
 
   function ultimaDiretta() {
@@ -946,6 +1012,24 @@
     interruttore("#imp-diagnostica", "diagnostica", "Diagnostica accesa", "Diagnostica spenta");
     $("#imp-overlay").addEventListener("change", (evento) => monitor.apriOverlay(evento.target.checked).catch((errore) => avviso(errore.message, "errore")));
     $("#imp-guida").addEventListener("click", () => apriGuida(true));
+    $("#imp-controlla").addEventListener("click", async () => {
+      $("#imp-controlla").disabled = true;
+      try {
+        const esito = await monitor.controllaAggiornamenti();
+        aggiornaAggiornamento(esito);
+        if (esito && esito.fase === "aggiornato") {
+          avviso(`Hai l'ultima versione, la ${esito.versione}`, "ok");
+        } else if (esito && esito.fase === "errore-controllo") {
+          avviso("Il server degli aggiornamenti non risponde", "attenzione");
+        } else if (esito && esito.fase === "sviluppo") {
+          avviso("Copia di prova: aggiornamenti spenti", "attenzione");
+        }
+      } catch (errore) {
+        $("#imp-controlla").disabled = false;
+        avviso(errore.message, "errore");
+      }
+    });
+    monitor.onAggiornamento(aggiornaAggiornamento);
 
     $("#guida-modulo-canale").addEventListener("submit", async (evento) => {
       evento.preventDefault();
@@ -1087,6 +1171,11 @@
       $("#imp-versione").textContent = `Versione ${info.versione}${info.finto ? ", dati di prova" : ""}`;
     } catch {
       $("#imp-versione").textContent = "";
+    }
+    try {
+      aggiornaAggiornamento(await monitor.statoAggiornamento());
+    } catch {
+      aggiornaAggiornamento(null);
     }
     setInterval(() => {
       if (stato) {

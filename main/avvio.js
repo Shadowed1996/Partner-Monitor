@@ -2,7 +2,7 @@ const path = require("node:path");
 const fs = require("node:fs");
 const { app, BrowserWindow, Tray, Menu, Notification, ipcMain, shell, dialog, nativeTheme, nativeImage, session, screen, safeStorage } = require("electron");
 
-const { avviaAggiornamenti } = require("./aggiornamenti");
+const { avviaAggiornamenti, controllaAggiornamenti, statoAggiornamento } = require("./aggiornamenti");
 
 const RADICE = path.join(__dirname, "..");
 const FINTO = process.env.PARTNER_FINTO === "1";
@@ -44,6 +44,7 @@ let codaTwitch = Promise.resolve();
 
 nativeTheme.themeSource = "dark";
 app.setAppUserModelId("com.filippo.partnermonitor");
+app.commandLine.appendSwitch("disable-blink-features", "WebAuth");
 
 function percorsoPreferenze() {
   return path.join(app.getPath("userData"), "interfaccia.json");
@@ -556,6 +557,11 @@ function registraIpc() {
     return true;
   });
   gestisci("monitor:versione", async () => ({ versione: app.getVersion(), finto: FINTO }));
+  gestisci("monitor:aggiornamento", async () => statoAggiornamento());
+  gestisci("monitor:controllaAggiornamenti", async () => {
+    await controllaAggiornamenti();
+    return statoAggiornamento();
+  });
 }
 
 function proteggi() {
@@ -644,8 +650,9 @@ if (!COLLAUDO && !app.requestSingleInstanceLock()) {
       impostazioniCorrenti = {};
     }
     applicaAvvioConWindows(impostazioniCorrenti.avvioConWindows);
-    if (!COLLAUDO && !FINTO) {
+    if (process.env.PARTNER_PROVA_AGGIORNAMENTO || (!COLLAUDO && !FINTO)) {
       avviaAggiornamenti({
+        suStato: (aggiornamento) => inviaATutti("monitor:aggiornamento", aggiornamento),
         prontaPerInstallare: (versione) => {
           if (Notification.isSupported()) {
             new Notification({ title: "Partner Monitor si aggiorna", body: `Installo la versione ${versione}, il programma si riapre da solo.`, icon: ICONA }).show();

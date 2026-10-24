@@ -327,6 +327,78 @@ input {
   background: var(--ambra);
 }
 
+.banda.aggiornamento {
+  border-color: var(--viola-bordo);
+  background: var(--viola-tenue);
+  color: var(--testo);
+}
+
+.banda.aggiornamento .banda-punto {
+  background: var(--viola);
+  animation: banda-battito 1.4s infinite;
+}
+
+.banda.aggiornamento.ok {
+  border-color: var(--verde-bordo);
+  background: var(--verde-tenue);
+}
+
+.banda.aggiornamento.ok .banda-punto {
+  background: var(--verde);
+  animation: none;
+}
+
+.banda.aggiornamento.errore {
+  border-color: var(--rosso-bordo);
+  background: var(--rosso-tenue);
+}
+
+.banda.aggiornamento.errore .banda-punto {
+  background: var(--rosso);
+  animation: none;
+}
+
+.banda-barra {
+  flex: none;
+  width: 140px;
+  height: 6px;
+  border-radius: 99px;
+  background: var(--superficie-3);
+  overflow: hidden;
+}
+
+.banda-barra span {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--viola), var(--ciano));
+  transition: width 0.2s;
+}
+
+.aggiornamento-riga {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.aggiornamento-riga .nota.piccola {
+  margin-top: 0;
+}
+
+.aggiornamento-riga .nota.piccola + .nota.piccola {
+  margin-top: 4px;
+}
+
+@keyframes banda-battito {
+  50% {
+    opacity: 0.3;
+  }
+}
+
 main:focus {
   outline: none;
 }

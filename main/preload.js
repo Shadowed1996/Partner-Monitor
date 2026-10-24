@@ -36,5 +36,8 @@ contextBridge.exposeInMainWorld("monitor", {
   overlayAperto: () => chiama("monitor:overlayAperto"),
   apriPrincipale: () => chiama("monitor:apriPrincipale"),
   apriLink: (indirizzo) => chiama("monitor:apriLink", String(indirizzo)),
-  versione: () => chiama("monitor:versione")
+  versione: () => chiama("monitor:versione"),
+  statoAggiornamento: () => chiama("monitor:aggiornamento"),
+  onAggiornamento: (richiamo) => ascolta("monitor:aggiornamento", richiamo),
+  controllaAggiornamenti: () => chiama("monitor:controllaAggiornamenti")
 });
